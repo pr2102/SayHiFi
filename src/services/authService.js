@@ -1,6 +1,9 @@
+import { Capacitor } from '@capacitor/core'
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 import {
   GoogleAuthProvider,
   RecaptchaVerifier,
+  signInWithCredential,
   signInWithPhoneNumber,
   signInWithPopup,
   signOut,
@@ -37,6 +40,14 @@ export function friendlyAuthError(error) {
     return 'localhost is not authorized in Firebase Auth. Add localhost under Authentication > Settings > Authorized domains.'
   }
 
+  if (code === 'auth/invalid-credential' || code === 'invalid-credential') {
+    return 'Google sign-in returned an invalid token. Check the Android app in Firebase and rebuild the APK.'
+  }
+
+  if (code === '10' || /developer_error|api.?exception:?\s*10/i.test(error?.message || '')) {
+    return 'Google sign-in is blocked by Firebase Android setup. Add the APK signing SHA-1/SHA-256 to the Firebase Android app, download a fresh google-services.json, rebuild, and install the new APK.'
+  }
+
   return error?.message || 'Sign-in failed. Check Firebase Authentication settings and try again.'
 }
 
@@ -61,6 +72,27 @@ export async function upsertUserProfile(user) {
 
 export async function signInWithGoogle() {
   assertFirebaseReady()
+
+  if (Capacitor.isNativePlatform()) {
+    const nativeResult = await FirebaseAuthentication.signInWithGoogle({
+      skipNativeAuth: true,
+    })
+    const idToken = nativeResult.credential?.idToken
+    const accessToken = nativeResult.credential?.accessToken
+
+    if (!idToken && !accessToken) {
+      throw new Error('Google sign-in did not return a Firebase-compatible token. Check Firebase Android SHA fingerprints and Google provider setup.')
+    }
+
+    const credential = GoogleAuthProvider.credential(
+      idToken,
+      accessToken,
+    )
+    const result = await signInWithCredential(auth, credential)
+    await upsertUserProfile(result.user)
+    return result.user
+  }
+
   const provider = new GoogleAuthProvider()
   const result = await signInWithPopup(auth, provider)
   await upsertUserProfile(result.user)
@@ -92,5 +124,10 @@ export async function confirmPhoneOtp(confirmationResult, code) {
 
 export function logout() {
   assertFirebaseReady()
+  if (Capacitor.isNativePlatform()) {
+    FirebaseAuthentication.signOut().catch((error) => {
+      console.warn('Native sign-out failed', error)
+    })
+  }
   return signOut(auth)
 }
