@@ -1,18 +1,12 @@
-import { LogIn, Phone } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import { useState } from 'react'
 import { firebaseReady, missingFirebaseKeys } from '../lib/firebase'
 import {
-  confirmPhoneOtp,
   friendlyAuthError,
-  sendPhoneOtp,
-  setupRecaptcha,
   signInWithGoogle,
 } from '../services/authService'
 
 export default function Login() {
-  const [phone, setPhone] = useState('')
-  const [code, setCode] = useState('')
-  const [confirmation, setConfirmation] = useState(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -33,7 +27,7 @@ export default function Login() {
           </div>
 
           <p className="setup-note">
-            Use `.env.example` as the template. Once configured, this screen becomes the Google and phone login flow.
+            Use `.env.example` as the template. Once configured, this screen becomes the Google login flow.
           </p>
         </section>
       </main>
@@ -46,40 +40,6 @@ export default function Login() {
 
     try {
       await signInWithGoogle()
-    } catch (nextError) {
-      setError(friendlyAuthError(nextError))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function submitPhone(event) {
-    event.preventDefault()
-    setBusy(true)
-    setError('')
-
-    try {
-      if (!phone.trim().startsWith('+')) {
-        throw new Error('Enter the phone number in international format, for example +15551234567.')
-      }
-
-      setupRecaptcha('recaptcha-container')
-      const result = await sendPhoneOtp(phone)
-      setConfirmation(result)
-    } catch (nextError) {
-      setError(friendlyAuthError(nextError))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function submitCode(event) {
-    event.preventDefault()
-    setBusy(true)
-    setError('')
-
-    try {
-      await confirmPhoneOtp(confirmation, code)
     } catch (nextError) {
       setError(friendlyAuthError(nextError))
     } finally {
@@ -101,37 +61,7 @@ export default function Login() {
           Continue with Google
         </button>
 
-        <form className="auth-form" onSubmit={confirmation ? submitCode : submitPhone}>
-          {!confirmation ? (
-            <label>
-              Phone number
-              <input
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="+15551234567"
-                type="tel"
-                value={phone}
-              />
-            </label>
-          ) : (
-            <label>
-              Verification code
-              <input
-                onChange={(event) => setCode(event.target.value)}
-                placeholder="123456"
-                type="text"
-                value={code}
-              />
-            </label>
-          )}
-
-          <button className="secondary-btn" disabled={busy} type="submit">
-            <Phone size={18} />
-            {confirmation ? 'Verify code' : 'Send OTP'}
-          </button>
-        </form>
-
         {error && <p className="error-text">{error}</p>}
-        <div id="recaptcha-container" />
       </section>
     </main>
   )
