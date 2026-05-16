@@ -7,20 +7,44 @@ export default function CallPanel({ chat, currentUserId }) {
   const [incomingCall, setIncomingCall] = useState(null)
   const [session, setSession] = useState(null)
   const [status, setStatus] = useState('Idle')
+  const sessionRef = useRef(null)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
+  const remoteAudioRef = useRef(null)
 
   const peerId = chat?.members?.find((member) => member !== currentUserId)
 
   useEffect(() => {
     if (!currentUserId || !chat?.id) return undefined
-    return listenIncomingCalls(currentUserId, chat.id, setIncomingCall)
+    return listenIncomingCalls(currentUserId, chat.id, setIncomingCall, (error) => {
+      setStatus(error?.message || 'Could not listen for calls')
+    })
   }, [chat?.id, currentUserId])
 
+  useEffect(() => {
+    sessionRef.current = session
+    if (!session) return
+
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = session.localStream
+    }
+
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = session.remoteStream
+    }
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = session.remoteStream
+    }
+  }, [session])
+
   function stopMedia() {
-    session?.localStream?.getTracks().forEach((track) => track.stop())
-    session?.peerConnection?.close()
-    session?.cleanup?.()
+    const activeSession = sessionRef.current
+    activeSession?.localStream?.getTracks().forEach((track) => track.stop())
+    activeSession?.remoteStream?.getTracks().forEach((track) => track.stop())
+    activeSession?.peerConnection?.close()
+    activeSession?.cleanup?.()
+    sessionRef.current = null
     setSession(null)
     setActiveCallId('')
     setStatus('Idle')
@@ -32,18 +56,38 @@ export default function CallPanel({ chat, currentUserId }) {
     setActiveCallId(callId)
     setStatus(audioOnly ? 'Starting audio call' : 'Starting video call')
 
-    const nextSession = await startCall({
-      callId,
-      chatId: chat.id,
-      callerId: currentUserId,
-      receiverId: peerId,
-      localVideoRef,
-      remoteVideoRef,
-      audioOnly,
-    })
+    try {
+      const nextSession = await startCall({
+        callId,
+        chatId: chat.id,
+        callerId: currentUserId,
+        receiverId: peerId,
+        audioOnly,
+        onCallStatus: (nextStatus) => {
+          setStatus(
+            nextStatus === 'active'
+              ? 'Active'
+              : nextStatus === 'connected'
+                ? 'Connected'
+                : nextStatus === 'failed'
+                  ? 'Connection failed'
+                  : nextStatus === 'ended'
+                    ? 'Call ended'
+                    : 'Ringing',
+          )
+          if (nextStatus === 'ended') stopMedia()
+        },
+        onCallError: (error) => {
+          setStatus(error?.message || 'Call signaling failed')
+        },
+      })
 
-    setSession(nextSession)
-    setStatus('Ringing')
+      setSession(nextSession)
+      setStatus('Ringing')
+    } catch (error) {
+      setStatus(error?.message || 'Could not start call')
+      setActiveCallId('')
+    }
   }
 
   async function handleAnswer() {
@@ -51,15 +95,33 @@ export default function CallPanel({ chat, currentUserId }) {
     setActiveCallId(incomingCall.id)
     setStatus('Connecting')
 
-    const nextSession = await answerCall({
-      callId: incomingCall.id,
-      localVideoRef,
-      remoteVideoRef,
-    })
+    try {
+      const nextSession = await answerCall({
+        callId: incomingCall.id,
+        onCallStatus: (nextStatus) => {
+          setStatus(
+            nextStatus === 'connected'
+              ? 'Connected'
+              : nextStatus === 'failed'
+                ? 'Connection failed'
+                : nextStatus === 'ended'
+                  ? 'Call ended'
+                  : 'Active',
+          )
+          if (nextStatus === 'ended') stopMedia()
+        },
+        onCallError: (error) => {
+          setStatus(error?.message || 'Call signaling failed')
+        },
+      })
 
-    setSession(nextSession)
-    setIncomingCall(null)
-    setStatus('Active')
+      setSession(nextSession)
+      setIncomingCall(null)
+      setStatus('Active')
+    } catch (error) {
+      setStatus(error?.message || 'Could not answer call')
+      setActiveCallId('')
+    }
   }
 
   async function handleEnd() {
@@ -78,7 +140,9 @@ export default function CallPanel({ chat, currentUserId }) {
         </div>
       )}
 
-      {session && (
+      {session?.audioOnly && <audio ref={remoteAudioRef} autoPlay playsInline />}
+
+      {session && !session.audioOnly && (
         <div className="call-video-grid">
           <video ref={remoteVideoRef} autoPlay playsInline />
           <video ref={localVideoRef} autoPlay muted playsInline />

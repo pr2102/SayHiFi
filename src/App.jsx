@@ -16,9 +16,9 @@ function Shell() {
   if (!user) return <Login />
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${selectedChat ? 'app-shell-chat-open' : 'app-shell-list-open'}`}>
       <Chats user={user} selectedChatId={selectedChat?.id} onSelectChat={setSelectedChat} />
-      <ChatRoom chat={selectedChat} user={user} />
+      <ChatRoom chat={selectedChat} user={user} onBack={() => setSelectedChat(null)} />
     </div>
   )
 }

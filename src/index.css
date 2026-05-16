@@ -185,6 +185,20 @@ input {
   min-width: 0;
 }
 
+.mobile-back-btn {
+  align-items: center;
+  background: #e5f1ed;
+  border: 0;
+  border-radius: 8px;
+  color: #18342d;
+  cursor: pointer;
+  display: none;
+  flex: 0 0 auto;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
 .sidebar-header,
 .room-header {
   align-items: center;
@@ -431,10 +445,25 @@ input {
   align-items: center;
   background: #f8fbfa;
   border-top: 1px solid #dce8e4;
+  flex-wrap: wrap;
   padding: 12px;
   position: sticky;
   bottom: 0;
   z-index: 2;
+}
+
+.composer-error {
+  color: #b42318;
+  flex: 0 0 100%;
+  font-size: 13px;
+  margin: 0;
+}
+
+.composer-status {
+  color: #0f6d52;
+  flex: 0 0 100%;
+  font-size: 13px;
+  margin: 0;
 }
 
 .icon-btn,
@@ -464,20 +493,36 @@ input {
 
 @media (max-width: 860px) {
   .app-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
+    display: block;
+    height: 100svh;
   }
 
   .sidebar {
-    border-bottom: 1px solid #dce8e4;
     border-right: 0;
-    max-height: 38svh;
-    overflow: auto;
+    height: 100svh;
+    max-height: none;
   }
 
   .chat-room {
-    height: auto;
-    min-height: 0;
+    height: 100svh;
+  }
+
+  .app-shell-list-open .chat-room,
+  .app-shell-chat-open .sidebar {
+    display: none;
+  }
+
+  .app-shell-chat-open .chat-room,
+  .app-shell-list-open .sidebar {
+    display: grid;
+  }
+
+  .app-shell-list-open .sidebar {
+    display: flex;
+  }
+
+  .mobile-back-btn {
+    display: inline-flex;
   }
 
   .room-header {
