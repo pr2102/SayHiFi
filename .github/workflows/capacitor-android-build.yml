@@ -70,9 +70,13 @@ jobs:
           from pathlib import Path
 
           text = Path("gradle-build.log").read_text(errors="replace")
-          markers = ["* What went wrong:", "FAILURE: Build failed", "> Task", "Execution failed"]
-          starts = [text.find(marker) for marker in markers if text.find(marker) >= 0]
-          start = min(starts) if starts else max(0, len(text) - 7000)
+          start = -1
+          for marker in ["* What went wrong:", "Execution failed", "FAILURE: Build failed"]:
+              start = text.find(marker)
+              if start >= 0:
+                  break
+          if start < 0:
+              start = max(0, len(text) - 7000)
           excerpt = text[start:start + 7000]
           Path("gradle-excerpt.log").write_text(excerpt)
           PY
