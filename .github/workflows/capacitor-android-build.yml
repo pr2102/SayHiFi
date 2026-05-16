@@ -66,10 +66,19 @@ jobs:
           status=${PIPESTATUS[0]}
 
           if [ "$status" -ne 0 ]; then
-            tail -n 80 gradle-build.log > gradle-tail.log
+            python3 - <<'PY'
+          from pathlib import Path
+
+          text = Path("gradle-build.log").read_text(errors="replace")
+          markers = ["* What went wrong:", "FAILURE: Build failed", "> Task", "Execution failed"]
+          starts = [text.find(marker) for marker in markers if text.find(marker) >= 0]
+          start = min(starts) if starts else max(0, len(text) - 7000)
+          excerpt = text[start:start + 7000]
+          Path("gradle-excerpt.log").write_text(excerpt)
+          PY
             message=$(python3 - <<'PY'
           from pathlib import Path
-          text = Path("gradle-tail.log").read_text(errors="replace")
+          text = Path("gradle-excerpt.log").read_text(errors="replace")
           text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
           print(text[:7000])
           PY
