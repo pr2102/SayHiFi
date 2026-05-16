@@ -44,6 +44,10 @@ export function friendlyAuthError(error) {
     return 'Google sign-in returned an invalid token. Check the Android app in Firebase and rebuild the APK.'
   }
 
+  if (/no credentials available/i.test(error?.message || '')) {
+    return 'No Google account was returned by Android. Make sure a Google account is added on the device, then try Continue with Google again.'
+  }
+
   if (code === '10' || /developer_error|api.?exception:?\s*10/i.test(error?.message || '')) {
     return 'Google sign-in is blocked by Firebase Android setup. Add the APK signing SHA-1/SHA-256 to the Firebase Android app, download a fresh google-services.json, rebuild, and install the new APK.'
   }
@@ -76,6 +80,7 @@ export async function signInWithGoogle() {
   if (Capacitor.isNativePlatform()) {
     const nativeResult = await FirebaseAuthentication.signInWithGoogle({
       skipNativeAuth: true,
+      useCredentialManager: false,
     })
     const idToken = nativeResult.credential?.idToken
     const accessToken = nativeResult.credential?.accessToken
