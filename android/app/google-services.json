@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "267763733431",
+    "project_id": "sayhifi-f9d66",
+    "storage_bucket": "sayhifi-f9d66.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267763733431:android:244fbc019fa0b75a7e8e32",
+        "android_client_info": {
+          "package_name": "com.free.whatsappclone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "267763733431-o4acmj0ca244meffa9but6l4ru1erscm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoyDiA8DHJPCGzvzcEEj3vJGKLoxXMHtk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "267763733431-o4acmj0ca244meffa9but6l4ru1erscm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

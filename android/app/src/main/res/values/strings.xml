@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SayHiFi</string>
+    <string name="title_activity_main">SayHiFi</string>
+    <string name="package_name">com.free.whatsappclone</string>
+    <string name="custom_url_scheme">com.free.whatsappclone</string>
+</resources>
