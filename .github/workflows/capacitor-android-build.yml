@@ -75,6 +75,14 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
+      - name: Print debug signing fingerprints
+        run: |
+          keytool -list -v \
+            -keystore android/app/sayhifi-debug.keystore \
+            -storepass sayhifi \
+            -alias sayhifi-debug \
+            -keypass sayhifi
+
       - name: Build debug APK
         working-directory: android
         shell: bash
